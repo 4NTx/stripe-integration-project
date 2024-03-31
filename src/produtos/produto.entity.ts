@@ -13,4 +13,10 @@ export class Produto {
   @Min(0, { message: 'O preço do produto deve ser maior que zero.' })
   @Column('decimal', { precision: 10, scale: 2 })
   preco: number;
+
+  @Column({ nullable: true })
+  stripeProdutoId: string;
+
+  @Column({ nullable: true })
+  stripePrecoId: string;
 }

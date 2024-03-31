@@ -4,6 +4,26 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Produto } from './produto.entity';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import Stripe from 'stripe';
+
+jest.mock('stripe', () => {
+    const actualStripe = jest.requireActual('stripe');
+    return {
+        __esModule: true,
+        default: jest.fn().mockImplementation(() => ({
+            products: {
+                create: jest.fn().mockResolvedValue({ id: 'prod_mockId', name: 'Produto Teste' }),
+                update: jest.fn().mockResolvedValue({ id: 'prod_mockId', name: 'Produto Atualizado' }),
+                del: jest.fn().mockResolvedValue({}),
+            },
+            prices: {
+                create: jest.fn().mockResolvedValue({ id: 'price_mockId', unit_amount: 10000, currency: 'brl', product: 'prod_mockId' }),
+            },
+        })),
+        Stripe: actualStripe.Stripe,
+    };
+});
 
 describe('ProdutoService', () => {
     let servico: ProdutoService;
@@ -18,13 +38,16 @@ describe('ProdutoService', () => {
             find: jest.fn().mockImplementation(() => Promise.resolve([{ id: 1, nome: 'Produto 1', preco: 100 }])),
         };
 
-
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ProdutoService,
                 {
                     provide: getRepositoryToken(Produto),
                     useValue: repositorioMock,
+                },
+                {
+                    provide: ConfigService,
+                    useValue: { get: jest.fn().mockReturnValue('fake_stripe_secret_key') },
                 },
             ],
         }).compile();

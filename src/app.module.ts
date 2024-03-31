@@ -6,7 +6,10 @@ import { ProdutoModule } from './produtos/produto.module';
 @Module({
   imports: [
     ProdutoModule,
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
