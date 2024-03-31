@@ -1,0 +1,5 @@
+DB_HOST=localhost
+DB_PORTA=3306
+DB_USUARIO=4ntz
+DB_SENHA=senha
+DB_NOME=stripe
