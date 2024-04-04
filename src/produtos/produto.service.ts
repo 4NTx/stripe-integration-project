@@ -12,7 +12,7 @@ export class ProdutoService {
 
     constructor(
         @InjectRepository(Produto)
-        private readonly produtoRepositorio: Repository<Produto>,
+        private readonly produtoRepository: Repository<Produto>,
         private readonly configService: ConfigService,
     ) {
         const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
@@ -37,18 +37,18 @@ export class ProdutoService {
             product: stripeProduto.id,
         });
 
-        const produto = this.produtoRepositorio.create({
+        const produto = this.produtoRepository.create({
             nome,
             preco,
             stripeProdutoId: stripeProduto.id,
             stripePrecoId: stripePreco.id,
         });
 
-        return this.produtoRepositorio.save(produto);
+        return this.produtoRepository.save(produto);
     }
 
     async buscarProduto(id: number): Promise<Produto> {
-        const produto = await this.produtoRepositorio.findOne({ where: { id } });
+        const produto = await this.produtoRepository.findOne({ where: { id } });
         if (!produto) {
             throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
         }
@@ -74,24 +74,27 @@ export class ProdutoService {
         produto.nome = nome;
         produto.preco = preco;
         produto.stripePrecoId = stripePriceId;
-        return this.produtoRepositorio.save(produto);
+        return this.produtoRepository.save(produto);
     }
 
 
     async deletarProduto(id: number): Promise<void> {
         const produto = await this.buscarProduto(id);
 
-        if (produto.stripeProdutoId) {
-            await this.stripe.products.del(String(produto.stripeProdutoId));
-        }
-
-        const resultado = await this.produtoRepositorio.delete(id);
-        if (resultado.affected === 0) {
-            throw new NotFoundException(`Produto com ID ${id} não encontrado para deletar.`);
+        if (produto) {
+            if (produto.stripeProdutoId) {
+                await this.stripe.products.del(produto.stripeProdutoId);
+            }
+            const resultado = await this.produtoRepository.delete(id);
+            if (resultado.affected === 0) {
+                throw new NotFoundException(`Produto com ID ${id} não encontrado para deletar.`);
+            }
+        } else {
+            throw new NotFoundException(`Produto com ID ${id} não encontrado.`);
         }
     }
 
     async listarTodos(): Promise<Produto[]> {
-        return this.produtoRepositorio.find();
+        return this.produtoRepository.find();
     }
 }
